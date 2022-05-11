@@ -16,8 +16,8 @@ fn main() {
 }
 
 #[tauri::command]
-async fn search_wal(query: String) -> String {
-  reqwest::get(format!("https://wallhaven.cc/api/v1/search?q={}", query))
+async fn search_wal(query: String, page: u16) -> String {
+  reqwest::get(format!("https://wallhaven.cc/api/v1/search?q={}&page={}", query, page))
     .await.unwrap()
     .text()
     .await.unwrap()

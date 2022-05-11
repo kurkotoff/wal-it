@@ -3,7 +3,10 @@
   import SearchForm from "./components/SearchForm.svelte";
   import Navbar from "./components/Navbar.svelte";
   import ImageSelectScreen from "./components/ImageSelectScreen.svelte";
-import { invoke } from "@tauri-apps/api/tauri";
+  import { createEventDispatcher } from "svelte";
+  import { invoke } from "@tauri-apps/api/tauri";
+
+  const dispatch = createEventDispatcher();
 
   let view_image;
 
@@ -23,8 +26,7 @@ import { invoke } from "@tauri-apps/api/tauri";
 <main>
   {#if view_image == undefined}
     <Navbar/>
-    <SearchForm/>
-    <ImageList on:set-image-screen={setImageScreen}/>
+    <SearchForm on:set-image-screen={setImageScreen}/>
   {:else}
     <ImageSelectScreen image={view_image} on:close-image-screen={closeImageScreen} on:download-image={downloadImage}/>
   {/if}

@@ -1,19 +1,60 @@
 <script>
     import { invoke } from "@tauri-apps/api/tauri";
-    import { images_data } from "../stores";
+    import { query_input, img_data, img_meta } from "../stores";
+    import Image from "./Image.svelte";
+    import { createEventDispatcher } from "svelte";
+    import IntersectionObserver from "svelte-intersection-observer";
 
-    let userInput;
+    const dispatch = createEventDispatcher();
 
-    async function searchWal() {
-        var img_data_string = await invoke("search_wal", {query: userInput});
+    let element;
+    let page = 1;
+
+    function testScroll() {
+        console.log("Scrolled to bottom");
+    }
+
+    async function getImgData() {
+        var img_data_string = await invoke("search_wal", {query: $query_input, page: page});
         var img_data_arr = JSON.parse(img_data_string)["data"];
-        images_data.set(img_data_arr);
+        $img_meta = JSON.parse(img_data_string)["meta"];
+
+        return img_data_arr
+    }
+
+    async function setImgData() {
+        page = 1;
+        var new_data = await getImgData();
+        $img_data = new_data;
+    }
+
+    async function updateImgData() {
+        if ($query_input == $img_meta.query && $query_input != "") {
+            page++;
+            var new_data = await getImgData();
+            $img_data = $img_data.concat(new_data);
+        }
     }
 </script>
 
 <main>
-    <input type="text" bind:value={userInput}/>
-    <button on:click={searchWal}>Search</button>
+    <input type="text" bind:value={$query_input}/>
+    <button on:click={setImgData}>Search</button>
+
+    <ul>
+        {#each $img_data as image}
+            <li on:click={
+                function showImageScreen() {
+                    dispatch("set-image-screen", {viewImage: image});
+                }
+            }><Image src={image.thumbs.small} alt={image.id}/></li>
+        {/each}
+        
+        <!-- TODO: This shows "undefined" for some reason. Should fix -->
+        <IntersectionObserver {element} on:intersect={updateImgData}>
+            <div bind:this={element} style="visibility: hidden;"/>
+        </IntersectionObserver>
+    </ul>
 </main>
 
 <style>
@@ -37,5 +78,15 @@
     input {
         font-size: 1em;
         padding: 0.5em;
+    }
+
+    ul {
+        list-style-type: none;
+    }
+
+    li {
+        display: inline-block;
+        margin: 0.5em;
+        cursor: pointer;
     }
 </style>
